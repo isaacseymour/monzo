@@ -1,4 +1,4 @@
-package parser
+package main
 
 import (
 	h "golang.org/x/net/html"
