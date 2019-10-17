@@ -1,31 +1,53 @@
 package main
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"sync"
 	"testing"
+	"time"
 )
 
+var urls = []string{
+	"https://gocardless.com/",
+	"https://www.gocardless.com/",
+	"https://gocardless.com/thing1",
+	"https://gocardless.com/thing2",
+}
+
 func TestIgnoreOutsideUrls(t *testing.T) {
-	q := NewFilterQueue("gocardless.com")
-	q.Add("https://gocardless.com/")
-	assert.Equal(t, q.Len(), 1)
+	fmt.Println("hello!")
 
-	q.Add("https://www.gocardless.com/")
-	assert.Equal(t, q.Len(), 1)
+	mutex := &sync.Mutex{}
+	calledWith := make([]string, 0)
 
-	q.Add("https://gocardless.com/thing1")
-	assert.Equal(t, q.Len(), 2)
+	executionFn := func(url string, cb callback) {
+		fmt.Println("executed")
+		mutex.Lock()
+		calledWith = append(calledWith, url)
+		mutex.Unlock()
+		cb()
+	}
 
-	q.Add("https://gocardless.com/thing2")
-	assert.Equal(t, q.Len(), 3)
+	q := NewFilterQueue("gocardless.com", executionFn)
+	fmt.Println("built")
 
-	q.Add("https://gocardless.com/thing2")
-	assert.Equal(t, q.Len(), 3)
+	for _, url := range urls {
+		fmt.Println("adding")
+		q.Add(url)
+		q.Add(url)
+	}
+	q.Add("https://other-domain.com/path")
+	q.Add("https://support.gocardless.com/thing")
 
-	assert.Equal(t, q.Dequeue(), "https://gocardless.com/")
-	assert.Equal(t, q.Dequeue(), "https://gocardless.com/thing1")
-	assert.Equal(t, q.Dequeue(), "https://gocardless.com/thing2")
-	assert.Equal(t, q.Dequeue(), "")
+	fmt.Println("sleeping")
+	time.Sleep(100)
+
+	assert.Equal(t, calledWith, urls)
+
+	for k, _ := range q.inProgressUrls {
+		fmt.Printf("waiting on %s\n", k)
+	}
 
 	assert.Equal(t, q.Len(), 0)
 }

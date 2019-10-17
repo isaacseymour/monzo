@@ -1,25 +1,31 @@
 package main
 
-import "net/url"
-import "sync"
+import (
+	"net/url"
+	"sync"
+)
 
 type void struct{}
 
 var voidM void
 
+type callback func()
+
 type filterQueue struct {
-	mutex    *sync.Mutex
-	hostname string
-	queue    []string
-	seenUrls map[string]struct{}
+	mutex          *sync.Mutex
+	executionFn    func(string, callback)
+	hostname       string
+	inProgressUrls map[string]struct{}
+	seenUrls       map[string]struct{}
 }
 
-func NewFilterQueue(hostname string) *filterQueue {
+func NewFilterQueue(hostname string, executionFn func(string, callback)) *filterQueue {
 	return &filterQueue{
-		mutex:    &sync.Mutex{},
-		hostname: hostname,
-		queue:    make([]string, 0),
-		seenUrls: make(map[string]struct{}),
+		mutex:          &sync.Mutex{},
+		executionFn:    executionFn,
+		hostname:       hostname,
+		inProgressUrls: make(map[string]struct{}),
+		seenUrls:       make(map[string]struct{}),
 	}
 }
 
@@ -34,33 +40,29 @@ func (q *filterQueue) Add(urlStr string) {
 	}
 
 	q.mutex.Lock()
-	defer q.mutex.Unlock()
 
 	_, seen := q.seenUrls[urlStr]
 	if seen {
 		return
 	}
 
-	q.queue = append(q.queue, urlStr)
+	q.inProgressUrls[urlStr] = voidM
 	q.seenUrls[urlStr] = voidM
-}
-
-func (q *filterQueue) Len() int {
-	return len(q.queue)
-}
-
-func (q *filterQueue) Dequeue() string {
-	var elem string
-
-	q.mutex.Lock()
-
-	if len(q.queue) < 1 {
-		return elem
-	}
-
-	elem, q.queue = q.queue[0], q.queue[1:]
 
 	q.mutex.Unlock()
 
-	return elem
+	go func() {
+		q.executionFn(urlStr, func() { q.done(urlStr) })
+	}()
+}
+
+func (q *filterQueue) done(urlStr string) {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
+
+	delete(q.inProgressUrls, urlStr)
+}
+
+func (q *filterQueue) Len() int {
+	return len(q.inProgressUrls)
 }
