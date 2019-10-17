@@ -31,7 +31,8 @@ func TestIgnoreOutsideUrls(t *testing.T) {
 
 	for _, url := range urls {
 		q.Add(url)
-		q.Add(url) // shouldn't execute twice
+		q.Add(url)               // shouldn't execute twice
+		q.Add(url + "#fragment") // fragments do not matter
 	}
 	// should be ignored
 	q.Add("https://www.gocardless.com/")

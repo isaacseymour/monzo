@@ -41,6 +41,7 @@ func (q *filterQueue) Add(urlStr string) {
 		return
 	}
 
+	url.Fragment = ""
 	urlStr = url.String()
 
 	q.mutex.Lock()
