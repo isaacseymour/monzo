@@ -40,6 +40,7 @@ func (q *filterQueue) Add(urlStr string) {
 	}
 
 	q.mutex.Lock()
+	defer q.mutex.Unlock()
 
 	_, seen := q.seenUrls[urlStr]
 	if seen {
@@ -48,8 +49,6 @@ func (q *filterQueue) Add(urlStr string) {
 
 	q.inProgressUrls[urlStr] = voidM
 	q.seenUrls[urlStr] = voidM
-
-	q.mutex.Unlock()
 
 	go func() {
 		q.executionFn(urlStr, func() { q.done(urlStr) })

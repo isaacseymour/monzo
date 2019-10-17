@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
@@ -10,19 +9,16 @@ import (
 
 var urls = []string{
 	"https://gocardless.com/",
-	"https://www.gocardless.com/",
 	"https://gocardless.com/thing1",
 	"https://gocardless.com/thing2",
 }
 
 func TestIgnoreOutsideUrls(t *testing.T) {
-	fmt.Println("hello!")
 
 	mutex := &sync.Mutex{}
 	calledWith := make([]string, 0)
 
 	executionFn := func(url string, cb callback) {
-		fmt.Println("executed")
 		mutex.Lock()
 		calledWith = append(calledWith, url)
 		mutex.Unlock()
@@ -30,24 +26,27 @@ func TestIgnoreOutsideUrls(t *testing.T) {
 	}
 
 	q := NewFilterQueue("gocardless.com", executionFn)
-	fmt.Println("built")
 
 	for _, url := range urls {
-		fmt.Println("adding")
 		q.Add(url)
-		q.Add(url)
+		q.Add(url) // shouldn't execute twice
 	}
+	q.Add("https://www.gocardless.com/")
 	q.Add("https://other-domain.com/path")
 	q.Add("https://support.gocardless.com/thing")
 
-	fmt.Println("sleeping")
-	time.Sleep(100)
+	timeout := make(chan string, 1)
+	go func() {
+		time.Sleep(2 * time.Second)
+		timeout <- "timeout"
+	}()
+	go func() {
+		for q.Len() > 0 {
+		}
+		timeout <- "success"
+	}()
 
-	assert.Equal(t, calledWith, urls)
-
-	for k, _ := range q.inProgressUrls {
-		fmt.Printf("waiting on %s\n", k)
-	}
-
+	assert.Equal(t, "success", <-timeout)
+	assert.ElementsMatch(t, urls, calledWith)
 	assert.Equal(t, q.Len(), 0)
 }
