@@ -1,4 +1,4 @@
-package main
+package crawler
 
 import (
 	"bufio"
@@ -24,7 +24,7 @@ func successRoundTrip(req *http.Request) (*http.Response, error) {
 		}, nil
 	}
 
-	f, err := os.Open("fixtures/home.html")
+	f, err := os.Open("../fixtures/home.html")
 
 	if err != nil {
 		return nil, err

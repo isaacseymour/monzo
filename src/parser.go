@@ -1,4 +1,4 @@
-package main
+package crawler
 
 import (
 	h "golang.org/x/net/html"

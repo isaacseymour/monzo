@@ -1,6 +1,7 @@
-package main
+package crawler
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -13,12 +14,15 @@ type crawler struct {
 
 func (c *crawler) Poll(q *filterQueue, url string) {
 	defer q.Done(url)
+	fmt.Printf("Crawling %s\n", url)
 
 	resp, err := c.client.Get(url)
 	if err != nil {
+		fmt.Errorf("Got err %s\n", err)
 		return
 	}
 
+	fmt.Printf("Got resp %d\n", resp.StatusCode)
 	if resp.StatusCode != 200 {
 		return
 	}
@@ -32,7 +36,6 @@ func (c *crawler) Poll(q *filterQueue, url string) {
 	for _, link := range links {
 		q.Add(link)
 	}
-
 }
 
 func (c *crawler) Run(baseUrl string) (*sitemap, error) {

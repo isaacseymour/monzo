@@ -1,4 +1,4 @@
-package main
+package crawler
 
 import "testing"
 import "github.com/stretchr/testify/assert"

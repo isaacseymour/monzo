@@ -1,4 +1,4 @@
-package main
+package crawler
 
 import (
 	"bufio"
@@ -12,7 +12,7 @@ var homeLinks = []string{
 }
 
 func TestFindLinks(t *testing.T) {
-	f, err := os.Open("fixtures/home.html")
+	f, err := os.Open("../fixtures/home.html")
 	if err != nil {
 		t.Fatalf("error opening file: %s", err)
 	}
