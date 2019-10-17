@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"net/url"
 	"sync"
+	"time"
 )
 
 type void struct{}
@@ -64,4 +66,19 @@ func (q *filterQueue) done(urlStr string) {
 
 func (q *filterQueue) Len() int {
 	return len(q.inProgressUrls)
+}
+
+func (q *filterQueue) WaitForEmpty(timeout time.Duration) error {
+	channel := make(chan error, 1)
+	go func() {
+		time.Sleep(timeout)
+		channel <- errors.New("timeout")
+	}()
+	go func() {
+		for q.Len() > 0 {
+		}
+		channel <- nil
+	}()
+
+	return <-channel
 }

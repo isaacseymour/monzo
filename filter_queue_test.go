@@ -35,18 +35,9 @@ func TestIgnoreOutsideUrls(t *testing.T) {
 	q.Add("https://other-domain.com/path")
 	q.Add("https://support.gocardless.com/thing")
 
-	timeout := make(chan string, 1)
-	go func() {
-		time.Sleep(2 * time.Second)
-		timeout <- "timeout"
-	}()
-	go func() {
-		for q.Len() > 0 {
-		}
-		timeout <- "success"
-	}()
+	assert.Nil(t, q.WaitForEmpty(2*time.Second))
 
-	assert.Equal(t, "success", <-timeout)
 	assert.ElementsMatch(t, urls, calledWith)
+
 	assert.Equal(t, q.Len(), 0)
 }
