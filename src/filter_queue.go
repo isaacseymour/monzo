@@ -74,6 +74,7 @@ func (q *filterQueue) WaitForEmpty(timeout time.Duration) error {
 	}()
 	go func() {
 		for q.Len() > 0 {
+			time.Sleep(100)
 		}
 		channel <- nil
 	}()

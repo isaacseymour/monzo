@@ -21,6 +21,7 @@ func (c *crawler) Poll(q *filterQueue, url string) {
 		fmt.Errorf("Got err %s\n", err)
 		return
 	}
+	defer resp.Body.Close()
 
 	fmt.Printf("Got resp %d\n", resp.StatusCode)
 	if resp.StatusCode != 200 {
