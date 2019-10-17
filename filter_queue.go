@@ -11,17 +11,15 @@ type void struct{}
 
 var voidM void
 
-type callback func()
-
 type filterQueue struct {
 	mutex          *sync.Mutex
-	executionFn    func(string, callback)
+	executionFn    func(*filterQueue, string)
 	hostname       string
 	inProgressUrls map[string]struct{}
 	seenUrls       map[string]struct{}
 }
 
-func NewFilterQueue(hostname string, executionFn func(string, callback)) *filterQueue {
+func NewFilterQueue(hostname string, executionFn func(*filterQueue, string)) *filterQueue {
 	return &filterQueue{
 		mutex:          &sync.Mutex{},
 		executionFn:    executionFn,
@@ -53,11 +51,11 @@ func (q *filterQueue) Add(urlStr string) {
 	q.seenUrls[urlStr] = voidM
 
 	go func() {
-		q.executionFn(urlStr, func() { q.done(urlStr) })
+		q.executionFn(q, urlStr)
 	}()
 }
 
-func (q *filterQueue) done(urlStr string) {
+func (q *filterQueue) Done(urlStr string) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 

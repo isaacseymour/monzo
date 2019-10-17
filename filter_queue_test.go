@@ -18,11 +18,11 @@ func TestIgnoreOutsideUrls(t *testing.T) {
 	mutex := &sync.Mutex{}
 	calledWith := make([]string, 0)
 
-	executionFn := func(url string, cb callback) {
+	executionFn := func(q *filterQueue, url string) {
 		mutex.Lock()
 		calledWith = append(calledWith, url)
 		mutex.Unlock()
-		cb()
+		q.Done(url)
 	}
 
 	q := NewFilterQueue("gocardless.com", executionFn)
