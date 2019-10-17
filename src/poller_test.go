@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"testing"
 )
@@ -41,7 +42,8 @@ func TestPoll(t *testing.T) {
 		client:  &http.Client{Transport: RoundTripFunc(successRoundTrip)},
 		sitemap: NewSitemap(),
 	}
-	queue := NewFilterQueue("gocardless.com", crawler.Poll)
+	url, _ := url.Parse("https://gocardless.com")
+	queue := NewFilterQueue(url, crawler.Poll)
 
 	crawler.Poll(queue, "https://gocardless.com")
 

@@ -13,8 +13,8 @@ type crawler struct {
 }
 
 func (c *crawler) Poll(q *filterQueue, url string) {
+	fmt.Print(".")
 	defer q.Done(url)
-	fmt.Printf("Crawling %s\n", url)
 
 	resp, err := c.client.Get(url)
 	if err != nil {
@@ -23,7 +23,6 @@ func (c *crawler) Poll(q *filterQueue, url string) {
 	}
 	defer resp.Body.Close()
 
-	fmt.Printf("Got resp %d\n", resp.StatusCode)
 	if resp.StatusCode != 200 {
 		return
 	}
@@ -45,8 +44,8 @@ func (c *crawler) Run(baseUrl string) (*sitemap, error) {
 		return nil, err
 	}
 
-	queue := NewFilterQueue(url.Hostname(), c.Poll)
+	queue := NewFilterQueue(url, c.Poll)
 	queue.Add(baseUrl)
-	err = queue.WaitForEmpty(30 * time.Second)
+	err = queue.WaitForEmpty(120 * time.Second)
 	return c.sitemap, err
 }

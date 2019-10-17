@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"sync"
 	"time"
@@ -14,16 +15,16 @@ var voidM void
 type filterQueue struct {
 	mutex          *sync.Mutex
 	executionFn    func(*filterQueue, string)
-	hostname       string
+	baseUrl        *url.URL
 	inProgressUrls map[string]struct{}
 	seenUrls       map[string]struct{}
 }
 
-func NewFilterQueue(hostname string, executionFn func(*filterQueue, string)) *filterQueue {
+func NewFilterQueue(baseUrl *url.URL, executionFn func(*filterQueue, string)) *filterQueue {
 	return &filterQueue{
 		mutex:          &sync.Mutex{},
 		executionFn:    executionFn,
-		hostname:       hostname,
+		baseUrl:        baseUrl,
 		inProgressUrls: make(map[string]struct{}),
 		seenUrls:       make(map[string]struct{}),
 	}
@@ -34,10 +35,13 @@ func (q *filterQueue) Add(urlStr string) {
 	if err != nil {
 		return
 	}
+	url = q.baseUrl.ResolveReference(url)
 
-	if url.Hostname() != q.hostname {
+	if url.Hostname() != q.baseUrl.Hostname() {
 		return
 	}
+
+	urlStr = url.String()
 
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
@@ -74,7 +78,8 @@ func (q *filterQueue) WaitForEmpty(timeout time.Duration) error {
 	}()
 	go func() {
 		for q.Len() > 0 {
-			time.Sleep(100)
+			time.Sleep(time.Second)
+			fmt.Printf("\ndone %d, waiting on %d\n", len(q.seenUrls), q.Len())
 		}
 		channel <- nil
 	}()

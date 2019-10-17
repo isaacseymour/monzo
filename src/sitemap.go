@@ -2,7 +2,6 @@ package crawler
 
 import (
 	"bytes"
-	"fmt"
 	"sync"
 )
 
@@ -26,7 +25,6 @@ func (s *sitemap) Add(pageUrl string, links []string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	fmt.Printf("Added %s\n", pageUrl)
 	s.entries = append(s.entries, sitemapEntry{pageUrl: pageUrl, links: links})
 }
 
